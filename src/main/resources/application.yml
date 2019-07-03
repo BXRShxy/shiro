@@ -1,0 +1,29 @@
+server:
+  port: 8023
+  servlet:
+      # 系统访问路径
+      context-path: /shiro
+
+spring:
+  # 环境 dev|test|prod
+  profiles:
+    active: dev
+  thymeleaf:
+    cache: false
+    mode: HTML5
+    prefix: classpath:/templates/
+    suffix: .html
+
+  mvc:
+    throw-exception-if-no-handler-found: true
+    static-path-pattern: /static/**
+
+# mybatis-plus配置
+mybatis-plus:
+  configuration:
+    cache-enabled: false
+    map-underscore-to-camel-case: true
+    # 控制台打印sql语句
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  typeAliasesPackage: com.njust.shiro.mapper
+  mapper-locations: classpath:com/njust/shiro/mapper/*Mapper.xml

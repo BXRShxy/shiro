@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head th:replace="common/common::html" title="角色"></head>
+<body shiro:hasPermission="sys:role:manager">
+
+<div shiro:hasPermission="sys:role:dataGrid" class="easyui-layout" data-options="fit:true,border:false">
+    <div data-options="region:'center',fit:true,border:false">
+        <table data-options="fit:true,border:false" id="roleDataGrid"></table>
+    </div>
+</div>
+
+<div shiro:hasPermission="sys:role:add" id="roleToolbar" style="display: none;">
+    <a class="easyui-linkbutton" data-options="plain:true,iconCls:'glyphicon-plus icon-green'" href="javascript:void(0);"
+       onclick="addRoleFun();">添加</a>
+</div>
+
+<script th:inline="javascript" type="text/javascript">
+    var roleDataGrid;
+
+    $(function () {
+        roleDataGrid = $('#roleDataGrid').datagrid({
+            url: basePath + '/role/dataGrid',
+            loadMsg: '数据加载中，请稍等...',
+            striped: true,
+            rownumbers: true,
+            pagination: true,
+            singleSelect: true,    //是否单选
+            idField: 'id',
+            sortName: 'updateTime',
+            sortOrder: 'desc',
+            pageSize: 10,
+            pageList: [10, 20, 50, 100],
+            frozenColumns:
+                [
+                    [
+                        // {field: 'checkbox', checkbox: true},    //复选框
+                        // {title: 'id', field: 'id', width: '100', align: 'center', sortable: true},
+                        {title: '名称', field: 'roleName', width: '80', align: 'center', sortable: true},
+                        {title: '描述', field: 'description', width: '200', align: 'center', sortable: true},
+                        // {title: '排序号', field: 'orderNum', width: '80', align: 'center', sortable: true},
+                        {
+                            title: '状态', field: 'status', width: '60', align: 'center', sortable: true,
+                            formatter: function (value) {
+                                switch (value) {
+                                    case 0:
+                                        return '停用';
+                                    case 1:
+                                        return '正常';
+                                }
+                            }
+                        },
+                        {title: '备注', field: 'remark', width: '120', align: 'center', sortable: true},
+                        {
+                            title: '更新时间', field: 'updateTime', width: '130', halign: 'center', sortable: true,
+                            formatter: function (value) {
+                                return dateFormat(value);
+                            }
+                        },
+                        {
+                            title: '创建时间', field: 'createTime', width: '130', halign: 'center', sortable: true,
+                            formatter: function (value) {
+                                return dateFormat(value);
+                            }
+                        },
+                        {
+                            field: 'action', title: '操作', width: 200, align: 'center',
+                            formatter: function (value, row) {
+                                var str = '';
+                                str += $.formatString('<a href="javascript:void(0)" class="role-easyui-linkbutton-ok" ' +
+                                    'data-options="plain:true,iconCls:\'glyphicon-ok icon-green\'" onclick="grantRoleFun(\'{0}\');" >授权</a>', row.id);
+                                str += '&nbsp;&nbsp;|&nbsp;&nbsp;';
+                                str += $.formatString('<a href="javascript:void(0)" class="role-easyui-linkbutton-edit" ' +
+                                    'data-options="plain:true,iconCls:\'glyphicon-pencil icon-blue\'" onclick="editRoleFun(\'{0}\');" >编辑</a>', row.id);
+                                str += '&nbsp;&nbsp;|&nbsp;&nbsp;';
+                                str += $.formatString('<a href="javascript:void(0)" class="role-easyui-linkbutton-del" ' +
+                                    'data-options="plain:true,iconCls:\'glyphicon-trash icon-red\'" onclick="deleteRoleFun(\'{0}\');" >删除</a>', row.id);
+                                return str;
+                            }
+                        }
+                    ]
+                ],
+            onLoadSuccess: function () {
+                $('.role-easyui-linkbutton-ok').linkbutton({text: '授权'});
+                $('.role-easyui-linkbutton-edit').linkbutton({text: '编辑'});
+                $('.role-easyui-linkbutton-del').linkbutton({text: '删除'});
+            },
+            toolbar: '#roleToolbar'
+        });
+    });
+
+    /**
+     * 添加角色
+     */
+    function addRoleFun() {
+        parent.$.modalDialog({
+            title: '添加',
+            width: 500,
+            height: 300,
+            href: basePath + '/role/addPage',
+            buttons: [{
+                text: '确定',
+                handler: function () {
+                    parent.$.modalDialog.openner_dataGrid = roleDataGrid;//因为添加成功之后，需要刷新这个treeGrid，所以先预定义好
+                    var f = parent.$.modalDialog.handler.find('#roleAddForm');
+                    f.submit();
+                }
+            }]
+        });
+    }
+
+    /**
+     * 修改角色
+     */
+    function editRoleFun(id) {
+        if (id === undefined) {
+            var rows = roleDataGrid.datagrid('getSelections');
+            id = rows[0].id;
+        } else {
+            roleDataGrid.datagrid('unselectAll').datagrid('uncheckAll');
+        }
+        parent.$.modalDialog({
+            title: '编辑',
+            width: 500,
+            height: 300,
+            href: basePath + '/role/editPage?id=' + id,
+            buttons: [{
+                text: '确定',
+                handler: function () {
+                    parent.$.modalDialog.openner_dataGrid = roleDataGrid;//因为添加成功之后，需要刷新这个dataGrid，所以先预定义好
+                    var f = parent.$.modalDialog.handler.find('#roleEditForm');
+                    f.submit();
+                }
+            }]
+        });
+    }
+
+    /**
+     * 删除角色
+     */
+    function deleteRoleFun(id) {
+        if (id === undefined) {//点击右键菜单才会触发这个
+            var rows = roleDataGrid.datagrid('getSelections');
+            id = rows[0].id;
+        } else {//点击操作里面的删除图标会触发这个
+            roleDataGrid.datagrid('unselectAll').datagrid('uncheckAll');
+        }
+        parent.$.messager.confirm('询问', '您是否要删除当前角色？', function (b) {
+            if (b) {
+                progressLoad();
+                $.post(basePath + '/role/delete', {
+                    id: id
+                }, function (result) {
+                    if (result.success) {
+                        parent.$.messager.alert('提示', result.msg, 'info');
+                        roleDataGrid.datagrid('reload');
+                    } else {
+                        parent.$.messager.alert('错误', result.msg, 'error');
+                    }
+                    progressClose();
+                }, 'json');
+            }
+        });
+    }
+
+    /**
+     * 给角色授权
+     */
+    function grantRoleFun(id) {
+        if (id === undefined) {
+            var rows = roleDataGrid.datagrid('getSelections');
+            id = rows[0].id;
+        } else {
+            roleDataGrid.datagrid('unselectAll').datagrid('uncheckAll');
+        }
+        parent.$.modalDialog({
+            title: '授权',
+            width: 500,
+            height: 500,
+            href: basePath + '/role/grantPage?id=' + id,
+            buttons: [{
+                text: '确定',
+                handler: function () {
+                    parent.$.modalDialog.openner_dataGrid = roleDataGrid;//因为添加成功之后，需要刷新这个dataGrid，所以先预定义好
+                    var f = parent.$.modalDialog.handler.find('#roleGrantForm');
+                    f.submit();
+                }
+            }]
+        });
+    }
+
+    /**
+     * 日期格式化
+     */
+    function dateFormat(value) {
+        var date = new Date(value);
+        var y = date.getFullYear();
+        var m = date.getMonth() + 1;
+        var d = date.getDate();
+        var h = date.getHours();
+        var i = date.getMinutes();
+        var s = date.getSeconds();
+        return y + '-' + m + '-' + d + ' ' + h + ':' + i + ':' + s;
+    }
+
+</script>
+
+</body>

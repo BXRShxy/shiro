@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head th:replace="common/common::html"><title>部门</title></head>
+<body shiro:hasPermission="sys:dept:manager">
+
+<div shiro:hasPermission="sys:dept:treeGrid" class="easyui-layout" data-options="fit:true,border:false">
+    <div data-options="region:'center',border:false" style="overflow: hidden;">
+        <table id="deptTreeGrid"></table>
+    </div>
+    <div shiro:hasPermission="sys:dept:add" id="deptToolbar" style="display: none;">
+        <a onclick="addDeptFun();" href="javascript:void(0);" class="easyui-linkbutton"
+           data-options="plain:true,iconCls:'glyphicon-plus icon-green'">添加</a>
+    </div>
+</div>
+
+<script type="text/javascript" th:inline="javascript">
+    var deptTreeGrid;
+    $(function () {
+        deptTreeGrid = $('#deptTreeGrid').treegrid({
+            url: basePath + '/dept/treeGrid',
+            loadMsg: '数据加载中，请稍等...',
+            rownumbers: true,
+            idField: 'id',
+            treeField: 'deptName',
+            parentField: 'pid',
+            // fit: true,
+            fitColumns: false,
+            border: false,
+            columns:
+                [
+                    [
+                        // {field: 'checkbox', checkbox: true},    //复选框
+                        {field: 'code', title: '部门编号', width: 120, align: 'center'},
+                        {field: 'deptName', title: '部门名称', width: 180, align: 'center'},
+                        {field: 'pid', title: '上级部门编号', width: 150, align: 'center', hidden: true},
+                        {field: 'address', title: '地址', width: 200, align: 'center'},
+                        // {field: 'orderNum', title: '排序', width: 40, align: 'center'},
+                        // {field: 'icon', title: '图标', width: 120, align: 'center'},
+                        {title: '备注', field: 'remark', width: '120', align: 'center', sortable: true},
+                        {
+                            field: 'updateTime', title: '更新时间', width: 130,
+                            formatter: function (value) {
+                                return dateFormat(value);
+                            }
+                        },
+                        {
+                            field: 'createTime', title: '创建时间', width: 130, halign: 'center',
+                            formatter: function (value) {
+                                return dateFormat(value);
+                            }
+                        },
+                        {
+                            field: 'action', title: '操作', width: 130, align: 'center', halign: 'center',
+                            formatter: function (value, row, index) {
+                                var str = '';
+                                str += $.formatString('<a href="javascript:void(0)" class="dept-easyui-linkbutton-edit" ' +
+                                    'data-options="plain:true,iconCls:\'glyphicon-pencil icon-blue\'" onclick="editDeptFun(\'{0}\');" >编辑</a>', row.id);
+                                str += '&nbsp;&nbsp;|&nbsp;&nbsp;';
+                                str += $.formatString('<a href="javascript:void(0)" class="dept-easyui-linkbutton-del" ' +
+                                    'data-options="plain:true,iconCls:\'glyphicon-trash icon-red\'" onclick="deleteDeptFun(\'{0}\');" >删除</a>', row.id);
+                                return str;
+                            }
+                        }
+                    ]
+                ],
+            onLoadSuccess: function () {
+                $('.dept-easyui-linkbutton-edit').linkbutton({text: '编辑'});
+                $('.dept-easyui-linkbutton-del').linkbutton({text: '删除'});
+            },
+            toolbar: '#deptToolbar'
+        });
+    });
+
+    function addDeptFun() {
+        parent.$.modalDialog({
+            title: '添加',
+            width: 500,
+            height: 300,
+            //minimizable: true,  //最小化，默认false
+            //collapsible: true,  //可折叠，默认false
+            // maximizable: true,  //最大化，默认false
+            resizable: true,  //可伸缩，通过拖动改变大小，默认false
+            href: basePath + '/dept/addPage',
+            buttons: [{
+                text: '添加',
+                handler: function () {
+                    parent.$.modalDialog.openner_treeGrid = deptTreeGrid;//因为添加成功之后，需要刷新这个treeGrid，所以先预定义好
+                    var f = parent.$.modalDialog.handler.find('#deptAddForm');
+                    f.submit();
+                }
+            }]
+        });
+    }
+
+    function editDeptFun(id) {
+        if (id !== undefined) {
+            deptTreeGrid.treegrid('select', id);
+        }
+        var node = deptTreeGrid.treegrid('getSelected');
+        if (node) {
+            parent.$.modalDialog({
+                title: '编辑',
+                width: 500,
+                height: 300,
+                //minimizable: true,  //最小化，默认false
+                // collapsible: true,  //可折叠，默认false
+                // maximizable: true,  //最大化，默认false
+                resizable: true,  //可伸缩，通过拖动改变大小，默认false
+                href: basePath + '/dept/editPage?id=' + node.id,
+                buttons: [{
+                    text: '编辑',
+                    handler: function () {
+                        parent.$.modalDialog.openner_treeGrid = deptTreeGrid;//因为添加成功之后，需要刷新这个treeGrid，所以先预定义好
+                        var f = parent.$.modalDialog.handler.find('#deptEditForm');
+                        f.submit();
+                    }
+                }]
+            });
+        }
+    }
+
+    function deleteDeptFun(id) {
+        if (id !== undefined) {
+            deptTreeGrid.treegrid('select', id);
+        }
+        var node = deptTreeGrid.treegrid('getSelected');
+        if (node) {
+            parent.$.messager.confirm('询问', '您是否要删除当前资源？删除当前资源会连同子资源一起删除!', function (b) {
+                if (b) {
+                    progressLoad();
+                    $.post(basePath + '/dept/delete', {
+                        id: node.id
+                    }, function (result) {
+                        result = $.parseJSON(result);
+                        if (result.success) {
+                            parent.$.messager.alert('提示', result.msg, 'info');
+                            deptTreeGrid.treegrid('reload');
+                        } else {
+                            parent.$.messager.alert('错误', result.msg, 'error');
+                        }
+                        progressClose();
+                    }, 'text');
+                }
+            });
+        }
+    }
+
+    function dateFormat(value) {
+        var date = new Date(value);
+        var y = date.getFullYear();
+        var m = date.getMonth() + 1;
+        var d = date.getDate();
+        var h = date.getHours();
+        var i = date.getMinutes();
+        var s = date.getSeconds();
+        return y + '-' + m + '-' + d + ' ' + h + ':' + i + ':' + s;
+    }
+
+</script>
+
+</body>
+</html>

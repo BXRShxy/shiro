@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<!--
+    Created by 修身
+    CreateTime: 2018/11/14
+    Change above in File | Settings | File and Code Templates | Files. xmlns:shiro="http://www.pollix.at/thymeleaf/shiro"
+-->
+<html lang="" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>系统登录</title>
+    <meta content="text/html; charset=utf-8" http-equiv="Content-Type"/>
+    <link rel="stylesheet" th:href="@{/static/css/login/login.css}" type="text/css">
+
+    <script th:src="@{/static/jquery-easyui/jquery.min.js}" type="text/javascript"></script>
+    <script th:src="@{/static/jquery-easyui/jquery.easyui.min.js}" type="text/javascript"></script>
+    <script th:src="@{/static/jquery-easyui/locale/easyui-lang-zh_CN.js}" type="text/javascript"></script>
+    <!--<script type="text/javascript" th:src="@{/static/js/arrayToTree.js}"></script>-->
+    <script th:src="@{/static/js/extJs.js}" type="text/javascript"></script>
+    <!--<script th:src="@{/static/js/jquery.validate.min.js}" type="text/javascript"></script>-->
+    <script th:src="@{/static/js/login.js}" type="text/javascript"></script>
+    <script type="text/javascript">
+        var basePath = '[[${#httpServletRequest.getContextPath()}]]';
+    </script>
+
+</head>
+<body onkeydown="enterLogin();">
+<div class="top_div"></div>
+<div style="background: rgb(255, 255, 255); margin: -100px auto auto; border: 1px solid rgb(231, 231, 231);border-image:none;width:400px;text-align: center;">
+    <form id="loginForm" method="post">
+        <div style="width: 165px; height: 96px; position: absolute;">
+            <div class="tou"></div>
+            <div class="initial_left_hand" id="left_hand"></div>
+            <div class="initial_right_hand" id="right_hand"></div>
+        </div>
+        <p style="padding: 30px 0 10px; position: relative;">
+            <span class="u_logo"></span>
+            <input class="ipt" name="loginName" placeholder="请输入登录名" type="text" value="admin"/>
+        </p>
+        <p style="position: relative;">
+            <span class="p_logo"></span>
+            <input class="ipt" id="password" name="password" placeholder="请输入密码" type="password" value="test"/>
+        </p>
+        <!--<p style="padding: 10px 0px 10px; position: relative;">
+            <input class="captcha" name="captcha" placeholder="请输入验证码" type="text"/>
+            <img alt="验证码" data-src="${path }/captcha.jpg?t=" id="captcha" src="${path }/captcha.jpg"
+                 style="vertical-align:middle;border-radius:4px;width:94.5px;height:35px;cursor:pointer;">
+        </p>-->
+        <p style="position: relative;text-align: left;">
+            <input type="checkbox" name="rememberMe" style="vertical-align:middle;margin-left:40px;height:20px;"
+                   value="true"/> 记住密码
+        </p>
+        <div style="height: 50px; line-height: 50px; margin-top: 10px;border-top-color: rgb(231, 231, 231); border-top-width: 1px; border-top-style: solid;">
+            <p style="margin: 0 35px 20px 45px;">
+                <span style="float: right;">
+                    <a href="javascript:void(0);"
+                       onclick="submitForm()"
+                       style="background: rgb(0, 142, 173); padding: 7px 10px; border-radius: 4px; border: 1px solid rgb(26, 117, 152); border-image: none; color: rgb(255, 255, 255); font-weight: bold;">登录</a>
+                </span>
+            </p>
+        </div>
+    </form>
+</div>
+</body>
+</html>

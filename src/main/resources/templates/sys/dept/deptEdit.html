@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="common/common::html" title="部门编辑">
+</head>
+<body>
+
+<script type="text/javascript" th:inline="javascript">
+
+    var _pid = [[${dept.pid}]];
+
+    $(function () {
+
+        $('#deptEditPid').combotree({
+            url: basePath + '/dept/tree?flag=false',
+            parentField: 'pid',
+            panelHeight: 'auto',
+            value: _pid
+        });
+
+        $('#deptEditForm').form({
+            url: basePath + '/dept/edit',
+            onSubmit: function () {
+                progressLoad();
+                var isValid = $(this).form('validate');
+                if (!isValid) {
+                    progressClose();
+                }
+                return isValid;
+            },
+            success: function (result) {
+                progressClose();
+                result = $.parseJSON(result);
+                if (result.success) {
+                    parent.$.modalDialog.openner_treeGrid.treegrid('reload');//之所以能在这里调用到parent.$.modalDialog.openner_treeGrid这个对象，是因为dept.jsp页面预定义好了
+                    parent.$.modalDialog.handler.dialog('close');
+                } else {
+                    //var form = $('#deptEditForm');
+                    parent.$.messager.alert('提示', eval(result.msg), 'warning');
+                }
+            }
+        });
+
+    });
+</script>
+
+<div style="padding: 3px;">
+    <form id="deptEditForm" method="post">
+        <table class="grid">
+            <tr>
+                <td>编号</td>
+                <td>
+                    <input name="id" type="hidden" th:value="${dept.id}">
+                    <input id="pid" name="pid" type="hidden" th:value="${dept.pid}">
+                    <input title="" name="code" type="text" th:value="${dept.code}"/>
+                </td>
+                <td>资源名称</td>
+                <td><input name="deptName" type="text" th:value="${dept.deptName}" placeholder="请输入部门名称" class="easyui-validatebox"
+                           data-options="required:true"></td>
+            </tr>
+            <!--<tr>
+                <td>排序</td>
+                <td><input name="orderNum" class="easyui-numberspinner" th:value="${dept.orderNum}" style="width: 140px; height: 29px;"
+                           required="required" data-options="editable:false" placeholder=""></td>
+                <td>菜单图标</td>
+                <td><input title="" name="icon" th:value="${dept.icon}" onclick='top.window.openIconDialog(this)'/></td>
+            </tr>-->
+            <tr>
+                <td>地址</td>
+                <td colspan="3"><input title="" name="address" style="width: 300px;" th:value="${dept.address}"/></td>
+            </tr>
+            <tr>
+                <td>上级资源</td>
+                <td colspan="3"><select title="" id="deptEditPid" name="pid" style="width: 200px; height: 29px;"></select>
+                    <a class="easyui-linkbutton" href="javascript:void(0)" onclick="$('#deptEditPid').combotree('clear');">清空</a></td>
+            </tr>
+            <tr>
+                <td>备注</td>
+                <td colspan="3"><textarea name="remark" th:text="${dept.remark}"></textarea></td>
+            </tr>
+        </table>
+    </form>
+</div>
+
+</body>

@@ -1,0 +1,11 @@
+spring:
+  #数据库配置
+  datasource:
+    driver-class-name: com.mysql.jdbc.Driver
+    #本地数据库
+    url: jdbc:mysql://127.0.0.1:3306/demo_shiro?useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&transformedBitIsBoolean=true&useSSL=false
+    username: root
+    password: admin
+
+    #druid连接池
+    type: com.alibaba.druid.pool.DruidDataSource

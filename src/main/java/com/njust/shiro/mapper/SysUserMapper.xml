@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.njust.shiro.mapper.SysUserMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.njust.shiro.entity.SysUser">
+        <id column="id" property="id"/>
+        <result column="login_name" property="loginName"/>
+        <result column="user_name" property="userName"/>
+        <result column="password" property="password"/>
+        <result column="salt" property="salt"/>
+        <result column="sex" property="sex"/>
+        <result column="age" property="age"/>
+        <result column="phone" property="phone"/>
+        <result column="user_type" property="userType"/>
+        <result column="status" property="status"/>
+        <result column="dept_id" property="deptId"/>
+        <result column="dept_name" property="deptName"/>
+        <result column="order_num" property="orderNum"/>
+        <result column="remark" property="remark"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="create_time" property="createTime"/>
+
+        <collection property="rolesList" ofType="com.njust.shiro.entity.SysRole">
+            <id column="roleId" property="id"/>
+            <result column="role_name" property="roleName"/>
+        </collection>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, login_name, user_name, password, salt, sex, age, phone, user_type, status, dept_id, dept_name, order_num, remark, update_time, create_time
+    </sql>
+
+    <select id="listOfPage" resultType="java.util.Map">
+        SELECT
+        t.id, t.login_name AS loginName, t.user_name AS userName, t.phone,
+        t.update_time AS updateTime,t.create_time AS createTime, t.user_type AS userType,
+        t.`status`, t.dept_id AS deptId,t.remark,t.order_num AS orderNum,
+        s.dept_name AS deptName,t.sex, t.age,
+        group_concat(o.role_name) AS rolesList
+        FROM sys_user t
+        LEFT JOIN sys_user_role r ON t.id = r.user_id
+        LEFT JOIN sys_role o ON r.role_id = o.id
+        LEFT JOIN sys_dept s ON s.id = t.dept_id
+        <where>
+            <if test=" userName != null and userName != ''">
+                and t.user_name like '%${userName}%'
+            </if>
+            <if test="deptId != null">
+               and t.dept_id like '%${deptId}%'
+            </if>
+        </where>
+        GROUP BY t.id
+        ORDER BY ${sort} ${order}
+        limit #{start}, #{end}
+    </select>
+
+    <select id="totalOfList" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM (
+            SELECT
+                t.id, t.login_name AS loginName, t.user_name AS userName, t.phone,
+                t.update_time AS updateTime,t.create_time AS createTime, t.user_type AS userType,
+                t.`status`, t.dept_id AS deptId,t.remark,t.order_num AS orderNum,
+                s.dept_name AS deptName,
+                group_concat(o.role_name) AS rolesList
+            FROM sys_user t
+            LEFT JOIN sys_user_role r ON t.id = r.user_id
+            LEFT JOIN sys_role o ON r.role_id = o.id
+            LEFT JOIN sys_dept s ON s.id = t.dept_id
+            <where>
+                <if test=" userName != null and userName != '' ">
+                    t.user_name = #{userName}
+                </if>
+                <if test=" deptId != null ">
+                    t.dept_id = #{deptId}
+                </if>
+            </where>
+            GROUP BY t.id
+        ) AS a
+    </select>
+
+    <select id="selectSysUserById" resultMap="BaseResultMap" parameterType="java.lang.Integer">
+        SELECT
+            t.id,
+            t.login_name,
+            t.user_name,
+            t.password,
+            t.sex,
+            t.age,
+            t.user_type,
+            t.`status`,
+            t.dept_id,
+            t.create_time,
+            t.phone,
+            t.remark,
+            s.dept_name,
+            o.id AS roleId,
+            o.role_name
+        FROM
+            sys_user t
+        LEFT JOIN sys_user_role r ON t.id = r.user_id
+        LEFT JOIN sys_role o ON r.role_id = o.id
+        LEFT JOIN sys_dept s ON s.id = t.dept_id
+        where t.id = #{id}
+    </select>
+
+</mapper>

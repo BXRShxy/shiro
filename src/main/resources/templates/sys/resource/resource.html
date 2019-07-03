@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html xmlns:shiro="http://www.pollix.at/thymeleaf/shiro" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="common/common::html"><title>资源</title></head>
+<body shiro:hasPermission="sys:resource:manager">
+<!--<#shiroa href="javascript:{doAdd()}" iconCls="icon-add" permission="sysDictAdd">添加</#shiroa>-->
+
+<div shiro:hasPermission="sys:resource:treeGrid" class="easyui-layout" data-options="fit:true,border:false">
+    <div data-options="region:'center',border:false" style="overflow: hidden;">
+        <table id="resourceTreeGrid"></table>
+    </div>
+</div>
+
+<div shiro:hasPermission="sys:resource:add" id="resourceToolbar" style="display: none;">
+    <a class="easyui-linkbutton" data-options="plain:true,iconCls:'glyphicon-plus icon-green'" href="javascript:void(0);"
+       onclick="addResourceFun();">添加</a>
+</div>
+
+<script th:inline="javascript" type="text/javascript">
+    var resourceTreeGrid;
+    $(function () {
+        resourceTreeGrid = $('#resourceTreeGrid').treegrid({
+            url: basePath + '/resource/treeGrid',
+            loadMsg: '数据加载中，请稍等...',
+            rownumbers: true,
+            idField: 'id',
+            treeField: 'resourceName',
+            parentField: 'pid',
+            fit: true,
+            fitColumns: false,
+            border: false,
+            columns:
+                [
+                    [
+                        // {field: 'checkbox', checkbox: true},    //复选框
+                        {field: 'resourceName', title: '资源名称', width: 150, align: 'center'},
+                        {field: 'url', title: '资源路径', width: 200, align: 'center'},
+                        {field: 'openMode', title: '打开方式', width: 60, align: 'center'},
+                        {
+                            field: 'opened', title: '菜单状态', width: 60, align: 'center',
+                            formatter: function (value) {
+                                if (value === 1) {
+                                    return '打开';
+                                } else {
+                                    return '关闭';
+                                }
+                            }
+                        },
+                        {field: 'orderNum', title: '排序', width: 40, align: 'center'},
+                        {field: 'iconCls', title: '图标', width: 120, align: 'center'},
+                        {
+                            field: 'resourceType', title: '资源类型', width: 80, align: 'center',
+                            formatter: function (value) {
+                                switch (value) {
+                                    case 0:
+                                        return '菜单';
+                                    case 1:
+                                        return '按钮';
+                                }
+                            }
+                        },
+                        {field: 'pid', title: '上级资源ID', width: 150, align: 'center', hidden: true},
+                        {
+                            field: 'status', title: '状态', width: 40, align: 'center',
+                            formatter: function (value) {
+                                switch (value) {
+                                    case 0:
+                                        return '停用';
+                                    case 1:
+                                        return '正常';
+                                }
+                            }
+                        },
+                        {
+                            width: '130', title: '更新时间', field: 'updateTime',
+                            formatter: function (value) {
+                                return dateFormat(value);
+                            }
+                        },
+                        {
+                            width: '130', title: '创建时间', field: 'createTime',
+                            formatter: function (value) {
+                                return dateFormat(value);
+                            }
+                        },
+                        {
+                            field: 'action', title: '操作', width: 130, align: 'center',
+                            formatter: function (value, row, index) {
+                                var str = '<shiro:hasPermission="sys:resource:edit123">';
+                                str += $.formatString('<a href="javascript:void(0)" class="resource-easyui-linkbutton-edit" ' +
+                                    'data-options="plain:true,iconCls:\'glyphicon-pencil icon-blue\'" onclick="editResourceFun(\'{0}\');" >编辑</a>', row.id);
+                                str += '&nbsp;&nbsp;|&nbsp;&nbsp;';
+                                str += $.formatString('<a href="javascript:void(0)" class="resource-easyui-linkbutton-del" ' +
+                                    'data-options="plain:true,iconCls:\'glyphicon-trash icon-red\'" onclick="deleteResourceFun(\'{0}\');" >删除</a>', row.id);
+                                str += '</shiro:hasPermission>';
+                                return str;
+                            }
+                        }
+                    ]
+                ],
+            onLoadSuccess: function () {
+                $('.resource-easyui-linkbutton-edit').linkbutton({text: '编辑'});
+                $('.resource-easyui-linkbutton-del').linkbutton({text: '删除'});
+            },
+            toolbar: '#resourceToolbar'
+        });
+    });
+
+    function editResourceFun(id) {
+        if (id !== undefined) {
+            resourceTreeGrid.treegrid('select', id);
+        }
+        var node = resourceTreeGrid.treegrid('getSelected');
+        if (node) {
+            parent.$.modalDialog({
+                title: '编辑',
+                width: 500,
+                height: 350,
+                href: basePath + '/resource/editPage?id=' + node.id,
+                buttons: [{
+                    text: '编辑',
+                    handler: function () {
+                        parent.$.modalDialog.openner_treeGrid = resourceTreeGrid;//因为添加成功之后，需要刷新这个treeGrid，所以先预定义好
+                        var f = parent.$.modalDialog.handler.find('#resourceEditForm');
+                        f.submit();
+                    }
+                }]
+            });
+        }
+    }
+
+    function deleteResourceFun(id) {
+        if (id !== undefined) {
+            resourceTreeGrid.treegrid('select', id);
+        }
+        var node = resourceTreeGrid.treegrid('getSelected');
+        if (node) {
+            parent.$.messager.confirm('询问', '您是否要删除当前资源？删除当前资源会连同子资源一起删除!', function (b) {
+                if (b) {
+                    progressLoad();
+                    $.post(basePath + '/resource/delete', {
+                        id: node.id
+                    }, function (result) {
+                        result = $.parseJSON(result);
+                        if (result.success) {
+                            parent.$.messager.alert('提示', result.msg, 'info');
+                            resourceTreeGrid.treegrid('reload');
+                            parent.layoutWestTree.tree('reload');
+                        } else {
+                            parent.$.messager.alert('提示', result.msg, 'info');
+                        }
+                        progressClose();
+                    }, 'text');
+                }
+            });
+        }
+    }
+
+    function addResourceFun() {
+        parent.$.modalDialog({
+            title: '添加',
+            width: 500,
+            height: 350,
+            href: basePath + '/resource/addPage',
+            buttons: [{
+                text: '添加',
+                handler: function () {
+                    parent.$.modalDialog.openner_treeGrid = resourceTreeGrid;//因为添加成功之后，需要刷新这个treeGrid，所以先预定义好
+                    var f = parent.$.modalDialog.handler.find('#resourceAddForm');
+                    f.submit();
+                }
+            }]
+        });
+    }
+
+    /**
+     * 日期格式化
+     */
+    function dateFormat(value) {
+        var date = new Date(value);
+        var y = date.getFullYear();
+        var m = date.getMonth() + 1;
+        var d = date.getDate();
+        var h = date.getHours();
+        var i = date.getMinutes();
+        var s = date.getSeconds();
+        return y + '-' + m + '-' + d + ' ' + h + ':' + i + ':' + s;
+    }
+
+</script>
+
+</body>
+</html>

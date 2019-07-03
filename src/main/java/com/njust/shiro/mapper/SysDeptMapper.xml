@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.njust.shiro.mapper.SysDeptMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.njust.shiro.entity.SysDept">
+        <id column="id" property="id" />
+        <result column="dept_name" property="deptName" />
+        <result column="address" property="address" />
+        <result column="code" property="code" />
+        <result column="icon" property="icon" />
+        <result column="pid" property="pid" />
+        <result column="order_num" property="orderNum" />
+        <result column="remark" property="remark" />
+        <result column="update_time" property="updateTime" />
+        <result column="create_time" property="createTime" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, dept_name, address, code, icon, pid, order_num, remark, update_time, create_time
+    </sql>
+
+</mapper>

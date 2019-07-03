@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.njust.shiro.mapper.SysRoleMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.njust.shiro.entity.SysRole">
+        <id column="id" property="id"/>
+        <result column="role_name" property="roleName"/>
+        <result column="description" property="description"/>
+        <result column="order_num" property="orderNum"/>
+        <result column="status" property="status"/>
+        <result column="remark" property="remark"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, role_name, description, order_num, status, remark, update_time, create_time
+    </sql>
+
+    <select id="selectResourceIdListByRoleId" resultType="java.lang.Integer" parameterType="java.lang.Integer">
+        SELECT
+            e.resource_id AS id
+        FROM
+            sys_role r
+        LEFT JOIN sys_role_resource e ON r.id = e.role_id
+        WHERE
+            r.id = #{id}
+    </select>
+
+    <select id="selectResourceListByRoleIdList" resultType="com.njust.shiro.entity.SysResource" parameterType="java.lang.Integer">
+        SELECT
+        DISTINCT s.id AS id,
+        s.resource_name AS resourceName,
+        s.permission AS permission,
+        s.url AS url,
+        s.description AS description,
+        s.icon AS icon,
+        s.pid AS pid,
+        s.order_num AS orderNum,
+        s.status AS 'status',
+        s.open_mode AS openMode,
+        s.opened as opened,
+        s.resource_type AS resourceType,
+        s.create_time AS createTime
+        FROM
+        sys_role r
+        LEFT JOIN sys_role_resource e ON r.id = e.role_id
+        LEFT JOIN sys_resource s ON e.resource_id = s.id
+        WHERE
+        r.id in
+        <foreach item="item" index="index" collection="list" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        AND s.resource_type = 0
+        AND s.status = 1
+        ORDER BY s.order_num
+    </select>
+
+    <select id="selectResourceListByRoleId" resultType="java.util.HashMap" parameterType="java.lang.Integer">
+        SELECT
+            e.id AS id,
+            s.url AS url,
+            s.permission AS permission
+        FROM
+            sys_role r
+        LEFT JOIN sys_role_resource e ON r.id = e.role_id
+        LEFT JOIN sys_resource s ON e.resource_id = s.id
+        WHERE
+            r.id = #{id}
+    </select>
+
+</mapper>

@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="common/common::html"><title>用户</title></head>
+<body shiro:hasPermission="sys:user:manager">
+
+<div shiro:hasPermission="sys:user:dataGrid" class="easyui-layout" data-options="fit:true,border:false">
+    <div data-options="region:'north',border:false" style="margin-left: 20px;margin-top: 10px;margin-bottom: 10px;">
+        <form id="searchUserForm">
+            <table>
+                <tr>
+                    <th>姓名：</th>
+                    <td><input name="userName" placeholder="请输入用户姓名" style="width: 160px; height: 26px;"/></td>
+                    <td>
+                        <a class="easyui-linkbutton" data-options="iconCls:'glyphicon-search',plain:true" href="javascript:searchUserFun();">查询</a>
+                        <a class="easyui-linkbutton" data-options="iconCls:'glyphicon-remove-circle',plain:true" href="javascript:cleanUserFun();">清空</a>
+                    </td>
+                </tr>
+            </table>
+        </form>
+    </div>
+
+    <div data-options="region:'west',border:true,split:true,title:'组织机构'" style="width:150px;overflow: hidden; ">
+        <ul id="deptTree" style="height: auto;width: 100%"></ul>
+    </div>
+    <div data-options="region:'center',border:true,title:'用户列表'">
+        <table data-options="fit:true,border:false" id="userDataGrid"></table>
+    </div>
+
+</div>
+
+<div shiro:hasPermission="sys:user:add" id="userToolbar" shiro:hasRole="admin" style="display: none;">
+    <a class="easyui-linkbutton" data-options="plain:true,iconCls:'glyphicon-plus icon-green'" href="javascript:void(0);"
+       onclick="addUserFun();">添加</a>
+</div>
+
+<script th:inline="javascript" type="text/javascript">
+    var userDataGrid;
+    var deptTree;
+
+    $(function () {
+        deptTree = $('#deptTree').tree({
+            url: basePath + '/dept/tree',
+            parentField: 'pid',
+            onClick: function (node) {
+                userDataGrid.datagrid('load', {
+                    deptId: node.id
+                });
+            }
+        });
+
+        userDataGrid = $('#userDataGrid').datagrid({
+            url: basePath + '/user/dataGrid',
+            loadMsg: '数据加载中，请稍等...',
+            fit: true,
+            striped: true,
+            rownumbers: true,
+            singleSelect: true,    //是否单选
+            idField: 'id',
+            sortName: 'updateTime',
+            sortOrder: 'desc',
+            pagination: true,
+            pageSize: 10,
+            pageList: [10, 20, 50, 100],
+            columns:
+                [
+                    [
+                        // {field: 'checkbox', checkbox: true},    //复选框
+                        {title: '登录名', field: 'loginName', width: '80', align: 'center', sortable: true},
+                        {title: '姓名', field: 'userName', width: '80', align: 'center', sortable: true},
+                        // {title: '密码', field: 'password', width: '80', align: 'center', sortable: true, hidden: true},
+                        // {title: '盐', field: 'salt', width: '80', sortable: true, align: 'center', hidden: true},
+                        // {title: '部门ID', field: 'deptId', width: '80', align: 'center', hidden: true},
+                        {title: '所属部门', field: 'deptName', width: '80', align: 'center', sortable: true},
+                        {title: '年龄', field: 'age', width: '80', align: 'center', sortable: true},
+                        {
+                            title: '性别', field: 'sex', width: '80', align: 'center', sortable: true,
+                            formatter: function (value) {
+                                if (value === 0) {
+                                    return "女";
+                                } else if (value === 1) {
+                                    return "男";
+                                }
+                            }
+                        },
+                        {title: '电话', field: 'phone', width: '120', align: 'center', sortable: true},
+                        {title: '角色', field: 'rolesList', width: '200', align: 'center'},
+                        // {title: '排序号', field: 'orderNum', width: '80', align: 'center', sortable: true},
+                        {
+                            title: '用户类型', field: 'userType', width: '80', align: 'center', sortable: true,
+                            formatter: function (value) {
+                                if (value === 0) {
+                                    return "管理员";
+                                } else if (value === 1) {
+                                    return "用户";
+                                }
+                                return "未知类型";
+                            }
+                        },
+                        {
+                            title: '状态', field: 'status', width: '60', align: 'center', sortable: true,
+                            formatter: function (value) {
+                                switch (value) {
+                                    case 0:
+                                        return '停用';
+                                    case 1:
+                                        return '正常';
+                                }
+                            }
+                        },
+                        {title: '备注', field: 'remark', width: '120', align: 'center', sortable: true},
+                        {
+                            title: '更新时间', field: 'updateTime', width: '130', halign: 'center', sortable: true,
+                            formatter: function (value) {
+                                return dateFormat(value);
+                            }
+                        },
+                        {
+                            title: '创建时间', field: 'createTime', width: '130', halign: 'center', sortable: true,
+                            formatter: function (value) {
+                                return dateFormat(value);
+                            }
+                        },
+                        {
+                            field: 'action', title: '操作', width: 130, align: 'center',
+                            formatter: function (value, row) {
+                                var str = '';
+                                str += $.formatString('<a href="javascript:void(0)" class="user-easyui-linkbutton-edit" ' +
+                                    'data-options="plain:true,iconCls:\'glyphicon-pencil icon-blue\'" onclick="editUserFun(\'{0}\');" >编辑</a>', row.id);
+                                str += '&nbsp;&nbsp;|&nbsp;&nbsp;';
+                                str += $.formatString('<a href="javascript:void(0)" class="user-easyui-linkbutton-del" ' +
+                                    'data-options="plain:true,iconCls:\'glyphicon-trash icon-red\'" onclick="deleteUserFun(\'{0}\');" >删除</a>', row.id);
+                                return str;
+                            }
+                        }
+                    ]
+                ],
+            onLoadSuccess: function () {
+                $('.user-easyui-linkbutton-edit').linkbutton({text: '编辑'});
+                $('.user-easyui-linkbutton-del').linkbutton({text: '删除'});
+            },
+            toolbar: '#userToolbar'
+        });
+    });
+
+    function addUserFun() {
+        parent.$.modalDialog({
+            title: '添加',
+            width: 500,
+            height: 350,
+            //minimizable: true,  //最小化，默认false
+            //collapsible: true,  //可折叠，默认false
+            // maximizable: true,  //最大化，默认false
+            resizable: true,  //可伸缩，通过拖动改变大小，默认false
+            href: basePath + '/user/addPage',
+            buttons: [{
+                text: '添加',
+                handler: function () {
+                    parent.$.modalDialog.openner_dataGrid = userDataGrid;//因为添加成功之后，需要刷新这个dataGrid，所以先预定义好
+                    var f = parent.$.modalDialog.handler.find('#userAddForm');
+                    f.submit();
+                }
+            }]
+        });
+    }
+
+    function editUserFun(id) {
+        if (id === undefined) {
+            var rows = userDataGrid.datagrid('getSelections');
+            id = rows[0].id;
+        } else {
+            userDataGrid.datagrid('unselectAll').datagrid('uncheckAll');
+        }
+        parent.$.modalDialog({
+            title: '编辑',
+            width: 550,
+            height: 350,
+            //minimizable: true,  //最小化，默认false
+            //collapsible: true,  //可折叠，默认false
+            // maximizable: true,  //最大化，默认false
+            resizable: true,  //可伸缩，通过拖动改变大小，默认false
+            href: basePath + '/user/editPage?id=' + id,
+            buttons: [{
+                text: '确定',
+                handler: function () {
+                    parent.$.modalDialog.openner_dataGrid = userDataGrid;//因为添加成功之后，需要刷新这个dataGrid，所以先预定义好
+                    var f = parent.$.modalDialog.handler.find('#userEditForm');
+                    f.submit();
+                }
+            }]
+        });
+    }
+
+    function deleteUserFun(id) {
+        if (id === undefined) {//点击右键菜单才会触发这个
+            var rows = userDataGrid.datagrid('getSelections');
+            id = rows[0].id;
+        } else {//点击操作里面的删除图标会触发这个
+            userDataGrid.datagrid('unselectAll').datagrid('uncheckAll');
+        }
+        parent.$.messager.confirm('询问', '您是否要删除当前用户？', function (b) {
+            if (b) {
+                progressLoad();
+                $.post(basePath + '/user/delete', {
+                    id: id
+                }, function (result) {
+                    result = $.parseJSON(result);
+                    if (result.success) {
+                        parent.$.messager.alert('提示', result.msg, 'info');
+                        userDataGrid.datagrid('reload');
+                    } else {
+                        parent.$.messager.alert('错误', result.msg, 'error');
+                    }
+                    progressClose();
+                }, 'text');
+            }
+        });
+    }
+
+    function searchUserFun() {
+        userDataGrid.datagrid('load', $.serializeObject($('#searchUserForm')));
+    }
+
+    function cleanUserFun() {
+        $('#searchUserForm input').val('');
+        userDataGrid.datagrid('load', {});
+    }
+
+    /**
+     * 日期格式化
+     */
+    function dateFormat(value) {
+        var date = new Date(value);
+        var y = date.getFullYear();
+        var m = date.getMonth() + 1;
+        var d = date.getDate();
+        var h = date.getHours();
+        var i = date.getMinutes();
+        var s = date.getSeconds();
+        return y + '-' + m + '-' + d + ' ' + h + ':' + i + ':' + s;
+    }
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="common/common::html" title="用户添加">
+</head>
+<body>
+
+<script th:inline="javascript" type="text/javascript">
+
+    $(function () {
+        $('#userAddDeptId').combotree({
+            url: basePath + '/dept/tree',
+            required: true,
+            parentField: 'pid',
+            panelHeight: 'auto'
+        });
+
+        $('#userAddRoleIds').combotree({
+            url: basePath + '/role/tree',
+            multiple: true,
+            required: true,
+            panelHeight: 'auto'
+        });
+
+        $('#userAddForm').form({
+            url: basePath + '/user/add',
+            onSubmit: function () {
+                progressLoad();
+                var isValid = $(this).form('validate');
+                if (!isValid) {
+                    progressClose();
+                }
+                return isValid;
+            },
+            success: function (result) {
+                progressClose();
+                result = $.parseJSON(result);
+                if (result.success) {
+                    parent.$.modalDialog.openner_dataGrid.datagrid('reload');//之所以能在这里调用到parent.$.modalDialog.openner_dataGrid这个对象，是因为user.jsp页面预定义好了
+                    parent.$.modalDialog.handler.dialog('close');
+                } else {
+                    parent.$.messager.alert('提示', result.msg, 'warning');
+                }
+            }
+        });
+
+        //手机号码自定义验证
+        $.extend($.fn.validatebox.defaults.rules, {
+            telephone: {
+                validator: function (value) {
+                    var rex = /^1[3-8]+\d{9}$/;
+                    //var rex=/^(([0\+]\d{2,3}-)?(0\d{2,3})-)(\d{7,8})(-(\d{3,}))?$/;
+                    //区号：前面一个0，后面跟2-3位数字 ： 0\d{2,3}
+                    //电话号码：7-8位数字： \d{7,8
+                    //分机号：一般都是3位数字： \d{3,}
+                    //这样连接起来就是验证电话的正则表达式了：/^((0\d{2,3})-)(\d{7,8})(-(\d{3,}))?$/
+                    var rex2 = /^((0\d{2,3})-)(\d{7,8})(-(\d{3,}))?$/;
+                    return rex.test(value) || rex2.test(value);
+                },
+                message: '请输入正确电话或手机格式'
+            }
+        });
+
+    });
+</script>
+
+<div class="easyui-layout" data-options="fit:true,border:false">
+    <div data-options="region:'center',border:false" style="overflow: hidden;padding: 3px;">
+        <form id="userAddForm" method="post">
+            <table class="grid">
+                <tr>
+                    <td>登录名</td>
+                    <td><input class="easyui-validatebox" data-options="required:true" name="loginName" placeholder="请输入登录名称" type="text">
+                    </td>
+                    <td>姓名</td>
+                    <td><input class="easyui-validatebox" data-options="required:true" name="userName" placeholder="请输入姓名" type="text"></td>
+                </tr>
+                <tr>
+                    <td>密码</td>
+                    <td><input class="easyui-validatebox" data-options="required:true" name="password" placeholder="请输入密码" type="password"></td>
+                    <td>角色</td>
+                    <td><select id="userAddRoleIds" name="roleIds" style="width: 140px; height: 29px;"></select></td>
+                </tr>
+                <tr>
+                    <td>部门</td>
+                    <td><select class="easyui-validatebox" data-options="required:true" id="userAddDeptId" name="deptId"
+                                style="width: 140px; height: 29px;"></select></td>
+                    <td>用户类型</td>
+                    <td>
+                        <select class="easyui-combobox" data-options="width:140,height:29,editable:false,panelHeight:'auto'" name="userType">
+                            <option value="0">管理员</option>
+                            <option selected="selected" value="1">用户</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td>年龄</td>
+                    <td>
+                        <input class="easyui-numberspinner" name="age" type="text" style="width: 140px; height: 29px;"/>
+                    </td>
+                    <td>性别</td>
+                    <td>
+                        <select class="easyui-combobox" data-options="width:140,height:29,editable:false,panelHeight:'auto'" name="sex">
+                            <option value="1">男</option>
+                            <option value="0">女</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td>电话</td>
+                    <td>
+                        <input class="easyui-validatebox" data-options="validType:'telephone'" name="phone" placeholder="请输入正确手机格式" type="text"/>
+                    </td>
+                    <td>用户状态</td>
+                    <td>
+                        <select class="easyui-combobox" data-options="width:140,height:29,editable:false,panelHeight:'auto'" name="status">
+                            <option value="1">正常</option>
+                            <option value="0">停用</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td>备注</td>
+                    <td colspan="3"><textarea name="remark"></textarea></td>
+                </tr>
+            </table>
+        </form>
+    </div>
+</div>
+
+</body>
